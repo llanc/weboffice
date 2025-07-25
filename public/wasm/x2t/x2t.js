@@ -62,7 +62,7 @@ Module.noExitRuntime = true;
   Module.locateFile = function(path, prefix) {
     // 如果是 wasm 文件，从 R2 存储加载
     if (path.endsWith('.wasm')) {
-      const R2_BASE_URL = 'http://oss.weboffice.lrust.com/'; // 替换为你的 R2 域名
+      const R2_BASE_URL = 'https://webofficeoss.lrust.com/'; // 替换为你的 R2 域名
       const basePath = path.replace('.wasm', '');
 
       // 检查浏览器支持的压缩格式，优先使用压缩版本
