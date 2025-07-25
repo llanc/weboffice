@@ -1,10 +1,10 @@
 # Static assets - serve files directly
-/document/assets/*  /document/assets/:splat  200
-/document/web-apps/*  /document/web-apps/:splat  200
-/document/img/*  /document/img/:splat  200
-/document/fonts/*  /document/fonts/:splat  200
-/document/sdkjs/*  /document/sdkjs/:splat  200
-/document/wasm/*  /document/wasm/:splat  200
+/assets/*  /assets/:splat  200
+/web-apps/*  /web-apps/:splat  200
+/img/*  /img/:splat  200
+/fonts/*  /fonts/:splat  200
+/sdkjs/*  /sdkjs/:splat  200
+/wasm/*  /wasm/:splat  200
 
 # SPA fallback - serve index.html for all other routes
-/document/*  /document/index.html  200
+/*  /index.html  200
