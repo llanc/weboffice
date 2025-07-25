@@ -27,7 +27,7 @@ declare global {
   }
 }
 
-// types/x2t.d.ts - 类型定义文件
+// types/x2t.d.ts - Type definitions
 interface EmscriptenFileSystem {
   mkdir(path: string): void;
   readdir(path: string): string[];
@@ -56,7 +56,7 @@ interface BinConversionResult {
 type DocumentType = 'word' | 'cell' | 'slide';
 
 /**
- * X2T 工具类 - 负责文档转换功能
+ * X2T Converter Class - Handles document conversion functionality
  */
 class X2TConverter {
   private x2tModule: EmscriptenModule | null = null;
@@ -64,7 +64,7 @@ class X2TConverter {
   private initPromise: Promise<EmscriptenModule> | null = null;
   private hasScriptLoaded = false;
 
-  // 支持的文件类型映射
+  // Supported file type mapping
   private readonly DOCUMENT_TYPE_MAP: Record<string, DocumentType> = {
     docx: 'word',
     doc: 'word',
@@ -85,7 +85,7 @@ class X2TConverter {
   private readonly INIT_TIMEOUT = 300000;
 
   /**
-   * 加载 X2T 脚本文件
+   * Load X2T script file
    */
   async loadScript(): Promise<void> {
     if (this.hasScriptLoaded) return;
@@ -100,7 +100,7 @@ class X2TConverter {
       };
 
       script.onerror = (error) => {
-        const errorMsg = 'Failed to load X2T WASM script';
+        const errorMsg = 'Failed to load X2T WASM script. Please check your internet connection and try again.';
         console.error(errorMsg, error);
         reject(new Error(errorMsg));
       };
@@ -110,14 +110,14 @@ class X2TConverter {
   }
 
   /**
-   * 初始化 X2T 模块
+   * Initialize X2T module
    */
   async initialize(): Promise<EmscriptenModule> {
     if (this.isReady && this.x2tModule) {
       return this.x2tModule;
     }
 
-    // 防止重复初始化
+    // Prevent duplicate initialization
     if (this.initPromise) {
       return this.initPromise;
     }
@@ -132,14 +132,14 @@ class X2TConverter {
       return new Promise((resolve, reject) => {
         const x2t = window.Module;
         if (!x2t) {
-          reject(new Error('X2T module not found after script loading'));
+          reject(new Error('X2T module not found after script loading. Please refresh the page and try again.'));
           return;
         }
 
-        // 设置超时处理
+        // Set timeout handling
         const timeoutId = setTimeout(() => {
           if (!this.isReady) {
-            reject(new Error(`X2T initialization timeout after ${this.INIT_TIMEOUT}ms`));
+            reject(new Error(`X2T initialization timeout after ${this.INIT_TIMEOUT}ms. Please refresh the page and try again.`));
           }
         }, this.INIT_TIMEOUT);
 
@@ -157,38 +157,38 @@ class X2TConverter {
         };
       });
     } catch (error) {
-      this.initPromise = null; // 重置以允许重试
+      this.initPromise = null; // Reset to allow retry
       throw error;
     }
   }
 
   /**
-   * 创建工作目录
+   * Create working directories
    */
   private createWorkingDirectories(x2t: EmscriptenModule): void {
     this.WORKING_DIRS.forEach((dir) => {
       try {
         x2t.FS.mkdir(dir);
       } catch (error) {
-        // 目录可能已存在，忽略错误
+        // Directory may already exist, ignore error
         console.warn(`Directory ${dir} may already exist:`, error);
       }
     });
   }
 
   /**
-   * 获取文档类型
+   * Get document type
    */
   private getDocumentType(extension: string): DocumentType {
     const docType = this.DOCUMENT_TYPE_MAP[extension.toLowerCase()];
     if (!docType) {
-      throw new Error(`Unsupported file format: ${extension}`);
+      throw new Error(`Unsupported file format: ${extension}. Supported formats: DOCX, XLSX, PPTX, DOC, XLS, PPT, and more.`);
     }
     return docType;
   }
 
   /**
-   * 清理文件名
+   * Sanitize file name
    */
   private sanitizeFileName(input: string): string {
     if (typeof input !== 'string' || !input.trim()) {
@@ -212,25 +212,25 @@ class X2TConverter {
       .replace(unsafeChars, '');
 
     sanitized = sanitized.trim() || 'file';
-    return `${sanitized.slice(0, 200)}.${ext}`; // 限制长度
+    return `${sanitized.slice(0, 200)}.${ext}`; // Limit length
   }
 
   /**
-   * 执行文档转换
+   * Execute document conversion
    */
   private executeConversion(paramsPath: string): void {
     if (!this.x2tModule) {
-      throw new Error('X2T module not initialized');
+      throw new Error('X2T module not initialized. Please try refreshing the page.');
     }
 
     const result = this.x2tModule.ccall('main1', 'number', ['string'], [paramsPath]);
     if (result !== 0) {
-      throw new Error(`Conversion failed with code: ${result}`);
+      throw new Error(`Document conversion failed with error code: ${result}. Please check your file format and try again.`);
     }
   }
 
   /**
-   * 创建转换参数 XML
+   * Create conversion parameters XML
    */
   private createConversionParams(fromPath: string, toPath: string, additionalParams = ''): string {
     return `<?xml version="1.0" encoding="utf-8"?>
@@ -277,7 +277,7 @@ class X2TConverter {
   }
 
   /**
-   * 将文档转换为 bin 格式
+   * Convert document to bin format
    */
   async convertDocument(file: File): Promise<ConversionResult> {
     await this.initialize();
@@ -287,26 +287,26 @@ class X2TConverter {
     const documentType = this.getDocumentType(fileExt);
 
     try {
-      // 读取文件内容
+      // Read file content
       const arrayBuffer = await file.arrayBuffer();
       const data = new Uint8Array(arrayBuffer);
 
-      // 生成安全的文件名
+      // Generate safe file name
       const sanitizedName = this.sanitizeFileName(fileName);
       const inputPath = `/working/${sanitizedName}`;
       const outputPath = `${inputPath}.bin`;
 
-      // 写入文件到虚拟文件系统
+      // Write file to virtual file system
       this.x2tModule!.FS.writeFile(inputPath, data);
 
-      // 创建转换参数
+      // Create conversion parameters
       const params = this.createConversionParams(inputPath, outputPath);
       this.x2tModule!.FS.writeFile('/working/params.xml', params);
 
-      // 执行转换
+      // Execute conversion
       this.executeConversion('/working/params.xml');
 
-      // 读取转换结果
+      // Read conversion result
       const result = this.x2tModule!.FS.readFile(outputPath);
       const media = this.readMediaFiles();
 
@@ -317,12 +317,12 @@ class X2TConverter {
         media,
       };
     } catch (error) {
-      throw new Error(`Document conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Document conversion failed: ${error instanceof Error ? error.message : 'Unknown error occurred. Please try again.'}`);
     }
   }
 
   /**
-   * 将 bin 格式转换为指定格式并下载
+   * Convert bin format to specified format and download
    */
   async convertBinToDocumentAndDownload(
     bin: Uint8Array,
@@ -336,10 +336,10 @@ class X2TConverter {
     const outputFileName = `${sanitizedBase}.${targetExt.toLowerCase()}`;
 
     try {
-      // 写入 bin 文件
+      // Write bin file
       this.x2tModule!.FS.writeFile(`/working/${binFileName}`, bin);
 
-      // 创建转换参数
+      // Create conversion parameters
       let additionalParams = '';
       if (targetExt === 'PDF') {
         additionalParams = '<m_sFontDir>/working/fonts/</m_sFontDir>';
@@ -353,17 +353,16 @@ class X2TConverter {
 
       this.x2tModule!.FS.writeFile('/working/params.xml', params);
 
-      // 执行转换
+      // Execute conversion
       this.executeConversion('/working/params.xml');
 
-      // 读取生成的文档
+      // Read generated document
       const result = this.x2tModule!.FS.readFile(`/working/${outputFileName}`);
 
-      // 确保 result 是 Uint8Array 类型
+      // Ensure result is Uint8Array type
       const resultArray = result instanceof Uint8Array ? result : new Uint8Array(result as ArrayBuffer);
 
-      // 下载文件
-      // TODO: 完善打印功能
+      // Download file
       this.saveWithFileSystemAPI(resultArray, outputFileName);
 
       return {
@@ -371,7 +370,7 @@ class X2TConverter {
         data: result,
       };
     } catch (error) {
-      throw new Error(`Bin to document conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Export failed: ${error instanceof Error ? error.message : 'Unable to export document. Please try again.'}`);
     }
   }
 

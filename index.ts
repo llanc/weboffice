@@ -22,6 +22,7 @@ declare global {
     DocsAPI: {
       DocEditor: new (elementId: string, config: any) => any;
     };
+    editor: any;
   }
 }
 
@@ -36,7 +37,7 @@ const events: Record<string, MessageHandler<any, unknown>> = {
     }
     fileChunks.push(data);
     if (fileChunks.length >= data.totalChunks) {
-      const { removeLoading } = showLoading();
+      const { removeLoading } = showLoading('Processing document...');
       const file = await MessageCodec.decodeFileChunked(fileChunks);
       setDocmentObj({
         fileName: file.name,
@@ -60,10 +61,12 @@ const events: Record<string, MessageHandler<any, unknown>> = {
 
 Platform.init(events);
 
-const { file } = getAllQueryString();
+// Get URL parameters to handle different actions
+const urlParams = getAllQueryString();
+const { action, type } = urlParams;
 
 const onCreateNew = async (ext: string) => {
-  const { removeLoading } = showLoading();
+  const { removeLoading } = showLoading('Creating new document...');
   setDocmentObj({
     fileName: 'New_Document' + ext,
     file: undefined,
@@ -75,9 +78,7 @@ const onCreateNew = async (ext: string) => {
   await handleDocumentOperation({ file: fileBlob, fileName, isNew: !fileBlob });
   removeLoading();
 };
-// example: window.onCreateNew('.docx')
-// example: window.onCreateNew('.xlsx')
-// example: window.onCreateNew('.pptx')
+
 window.onCreateNew = onCreateNew;
 
 // Create a single file input element
@@ -89,11 +90,10 @@ document.body.appendChild(fileInput);
 
 const onOpenDocument = async () => {
   return new Promise((resolve) => {
-    // 触发文件选择器的点击事件
     fileInput.click();
     fileInput.onchange = async (event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
-      const { removeLoading } = showLoading();
+      const { removeLoading } = showLoading('Opening document...');
       if (file) {
         setDocmentObj({
           fileName: file.name,
@@ -105,16 +105,47 @@ const onOpenDocument = async () => {
         await handleDocumentOperation({ file: fileBlob, fileName, isNew: !fileBlob });
         resolve(true);
         removeLoading();
-        // 清空文件选择，这样同一个文件可以重复选择
         fileInput.value = '';
       }
     };
   });
 };
 
-// Create and append the control panel
+// Handle uploaded file from sessionStorage
+const handleUploadedFile = async () => {
+  const uploadedFileData = sessionStorage.getItem('uploadedFile');
+  if (uploadedFileData) {
+    const { removeLoading } = showLoading('Loading your document...');
+    try {
+      const fileData = JSON.parse(uploadedFileData);
+      
+      // Convert data URL back to File
+      const response = await fetch(fileData.data);
+      const blob = await response.blob();
+      const file = new File([blob], fileData.name, { type: fileData.type });
+      
+      setDocmentObj({
+        fileName: file.name,
+        file: file,
+        url: window.URL.createObjectURL(file),
+      });
+      
+      await initX2T();
+      const { fileName, file: fileBlob } = getDocmentObj();
+      await handleDocumentOperation({ file: fileBlob, fileName, isNew: !fileBlob });
+      
+      // Clear the uploaded file from sessionStorage
+      sessionStorage.removeItem('uploadedFile');
+      removeLoading();
+    } catch (error) {
+      console.error('Error loading uploaded file:', error);
+      removeLoading();
+    }
+  }
+};
+
+// Create and append the control panel with English text
 const createControlPanel = () => {
-  // 创建控制面板容器
   const container = document.createElement('div');
   container.style.cssText = `
     width: 100%;
@@ -136,7 +167,7 @@ const createControlPanel = () => {
     align-items: center;
   `;
 
-  // 创建标题区域
+  // Title section with back button
   const titleSection = document.createElement('div');
   titleSection.style.cssText = `
     display: flex;
@@ -145,11 +176,34 @@ const createControlPanel = () => {
     margin-right: auto;
   `;
 
+  const backButton = document.createElement('button');
+  backButton.innerHTML = '← Back to Home';
+  backButton.style.cssText = `
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  `;
+  backButton.addEventListener('mouseover', () => {
+    backButton.style.background = '#e5e7eb';
+  });
+  backButton.addEventListener('mouseout', () => {
+    backButton.style.background = '#f3f4f6';
+  });
+  backButton.addEventListener('click', () => {
+    window.location.href = './index.html';
+  });
+
   const logo = document.createElement('div');
   logo.style.cssText = `
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, #1890ff, #096dd9);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -158,69 +212,95 @@ const createControlPanel = () => {
     font-weight: bold;
     font-size: 16px;
   `;
-  logo.textContent = 'W';
-  titleSection.appendChild(logo);
+  logo.textContent = 'O';
 
-  const title = document.createElement('div');
+  const title = document.createElement('h1');
+  title.textContent = 'OnlyOffice Web Editor';
   title.style.cssText = `
-    font-size: 18px;
-    font-weight: 600;
-    color: #1f1f1f;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
   `;
-  title.textContent = 'Web Office';
+
+  titleSection.appendChild(backButton);
+  titleSection.appendChild(logo);
   titleSection.appendChild(title);
 
-  controlPanel.appendChild(titleSection);
-
-  // 创建按钮组
-  const buttonGroup = document.createElement('div');
-  buttonGroup.style.cssText = `
+  // Action buttons section
+  const actionsSection = document.createElement('div');
+  actionsSection.style.cssText = `
     display: flex;
-    flex-wrap: wrap;
     gap: 12px;
     align-items: center;
   `;
 
-  // Create upload button
-  const uploadButton = document.createElement('r-button');
-  uploadButton.textContent = 'Upload Document to view';
-  uploadButton.addEventListener('click', onOpenDocument);
-  buttonGroup.appendChild(uploadButton);
+  // Create New Document button
+  const newDocButton = document.createElement('button');
+  newDocButton.innerHTML = '📝 New Document';
+  newDocButton.style.cssText = `
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  `;
+  newDocButton.addEventListener('mouseover', () => {
+    newDocButton.style.background = '#2563eb';
+  });
+  newDocButton.addEventListener('mouseout', () => {
+    newDocButton.style.background = '#3b82f6';
+  });
+  newDocButton.addEventListener('click', () => onCreateNew('.docx'));
 
-  // Create new document buttons
-  const createDocxButton = document.createElement('r-button');
-  createDocxButton.textContent = 'New Word';
-  createDocxButton.addEventListener('click', () => onCreateNew('.docx'));
-  buttonGroup.appendChild(createDocxButton);
+  // Open Document button
+  const openButton = document.createElement('button');
+  openButton.innerHTML = '📁 Open Document';
+  openButton.style.cssText = `
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  `;
+  openButton.addEventListener('mouseover', () => {
+    openButton.style.background = '#059669';
+  });
+  openButton.addEventListener('mouseout', () => {
+    openButton.style.background = '#10b981';
+  });
+  openButton.addEventListener('click', onOpenDocument);
 
-  const createXlsxButton = document.createElement('r-button');
-  createXlsxButton.textContent = 'New Excel';
-  createXlsxButton.addEventListener('click', () => onCreateNew('.xlsx'));
-  buttonGroup.appendChild(createXlsxButton);
+  actionsSection.appendChild(newDocButton);
+  actionsSection.appendChild(openButton);
 
-  const createPptxButton = document.createElement('r-button');
-  createPptxButton.textContent = 'New PowerPoint';
-  createPptxButton.addEventListener('click', () => onCreateNew('.pptx'));
-  buttonGroup.appendChild(createPptxButton);
-
-  controlPanel.appendChild(buttonGroup);
-
-  // 将控制面板添加到容器中
+  controlPanel.appendChild(titleSection);
+  controlPanel.appendChild(actionsSection);
   container.appendChild(controlPanel);
 
-  // 在 body 的最前面插入容器
   document.body.insertBefore(container, document.body.firstChild);
 };
 
-// Initialize the containers
-createControlPanel();
+// Initialize the editor based on URL parameters
+const initializeEditor = async () => {
+  // Check if we're coming from the landing page with specific actions
+  if (action === 'new' && type) {
+    await onCreateNew(type);
+  } else if (action === 'open') {
+    await handleUploadedFile();
+  } else {
+    // Show the control panel for manual selection
+    createControlPanel();
+  }
+};
 
-if (!file) {
-  // Don't automatically open document dialog, let user choose
-  // onOpenDocument();
-} else {
-  setDocmentObj({
-    fileName: Math.random().toString(36).substring(2, 15),
-    url: file,
-  });
-}
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeEditor);
