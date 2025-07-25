@@ -65,13 +65,13 @@ Module.noExitRuntime = true;
       const R2_BASE_URL = 'https://webofficeoss.lrust.com/'; // 替换为你的 R2 域名
       const basePath = path.replace('.wasm', '');
 
-      // 检查浏览器支持的压缩格式，优先使用压缩版本
-      if (supportsGzip()) {
-        return R2_BASE_URL + basePath + '.wasm.gz' + suffix;
-      }
-      if (supportsBrotli()) {
-        return R2_BASE_URL + basePath + '.wasm.br' + suffix;
-      }
+      // // 检查浏览器支持的压缩格式，优先使用压缩版本
+      // if (supportsGzip()) {
+      //   return R2_BASE_URL + basePath + '.wasm.gz' + suffix;
+      // }
+      // if (supportsBrotli()) {
+      //   return R2_BASE_URL + basePath + '.wasm.br' + suffix;
+      // }
       // 回退到未压缩版本
       return R2_BASE_URL + path + suffix;
     }
