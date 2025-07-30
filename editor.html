@@ -3,15 +3,284 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Dynamic SEO Meta Tags -->
+    <title id="page-title">SecureOffice - Online Document Editor</title>
+    <meta name="description" id="page-description" content="Edit your documents securely in your browser. Complete privacy - your files never leave your device. Professional document editing with full Office compatibility." />
+    <meta name="keywords" content="online document editor, secure document editing, private office suite, browser-based editor, no upload document editor" />
+    <meta name="author" content="SecureOffice" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" id="og-title" content="SecureOffice - Secure Online Document Editor" />
+    <meta property="og:description" id="og-description" content="Edit documents with complete privacy in your browser. No uploads, no downloads, maximum security." />
+    <meta property="og:type" content="webapp" />
+    <meta property="og:image" content="./img/64.png" />
+
+    <!-- Favicon -->
     <link href="./img/64.png" rel="shortcut icon" />
-    <title>OnlyOffice Web Editor</title>
+    <link href="./img/64.png" rel="apple-touch-icon" />
+
+    <!-- Breadcrumb Structured Data -->
+    <script type="application/ld+json" id="breadcrumb-schema">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "SecureOffice",
+          "item": "./index.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Document Editor",
+          "item": "./editor.html"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="./web-apps/apps/api/documents/api.js" as="script" />
+
+    <!-- Error handling styles -->
+    <style>
+      .error-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: #f9fafb;
+        z-index: 10000;
+      }
+
+      .error-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+      }
+
+      .error-icon {
+        width: 64px;
+        height: 64px;
+        background: #fee2e2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 24px;
+      }
+
+      .error-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+      }
+
+      .error-message {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+      }
+
+      .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2563eb;
+      }
+
+      .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+      }
+
+      .btn-secondary:hover {
+        background: #e5e7eb;
+      }
+
+      /* Editor loading overlay */
+      .editor-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .error-card {
+          padding: 1.5rem;
+        }
+
+        .error-actions {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+        }
+      }
+    </style>
+
     <script src="./web-apps/apps/api/documents/api.js"></script>
   </head>
 
-  <body>
-    <div id="app" class="w-full h-full">
-      <div id="iframe"></div>
+  <body style="margin: 0; padding: 0; overflow: hidden;">
+    <!-- Accessible skip link -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded">
+      Skip to main content
+    </a>
+
+    <!-- Header with navigation -->
+    <header role="banner" style="background: white; border-bottom: 1px solid #e5e7eb; position: relative; z-index: 100;">
+      <nav aria-label="Main navigation" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; max-width: 1200px; margin: 0 auto;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <img src="./img/64.png" alt="SecureOffice" style="width: 32px; height: 32px;" />
+          <span style="font-weight: 600; color: #1f2937; font-size: 1.125rem;">SecureOffice</span>
+        </div>
+
+        <!-- Breadcrumb navigation -->
+        <nav aria-label="Breadcrumb" style="display: none;">
+          <ol style="display: flex; align-items: center; gap: 0.5rem; margin: 0; padding: 0; list-style: none; font-size: 0.875rem; color: #6b7280;">
+            <li><a href="./index.html" style="color: #3b82f6; text-decoration: none;">Home</a></li>
+            <li aria-hidden="true" style="color: #d1d5db;">›</li>
+            <li aria-current="page" style="color: #1f2937; font-weight: 500;" id="breadcrumb-current">Editor</li>
+          </ol>
+        </nav>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <!-- Document status indicator -->
+          <div id="save-status" style="display: none; font-size: 0.875rem; color: #10b981;" aria-live="polite">
+            <span id="save-status-text">Saved</span>
+          </div>
+
+          <button id="back-home" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;" aria-label="Return to homepage">
+            ← Back to Home
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Main content area -->
+    <main id="main-content" role="main" style="position: relative; width: 100%; height: calc(100vh - 64px);">
+      <div id="app" style="width: 100%; height: 100%; position: relative;">
+        <!-- Editor container -->
+        <div id="iframe" style="width: 100%; height: 100%;" aria-label="Document editor"></div>
+
+        <!-- Loading state -->
+        <div id="editor-loading" class="editor-loading" style="display: none;" aria-hidden="true">
+          <div style="text-align: center;">
+            <div style="width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+            <div style="color: #6b7280; font-size: 0.875rem;">Loading editor...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Error states (hidden by default) -->
+    <div id="error-container" class="error-container" style="display: none;" role="alert">
+      <div class="error-card">
+        <div class="error-icon" id="error-icon">⚠️</div>
+        <h1 class="error-title" id="error-title">Something went wrong</h1>
+        <p class="error-message" id="error-message">We encountered an issue loading the editor. Please try again.</p>
+        <div class="error-actions">
+          <button id="retry-btn" class="btn btn-primary">Try Again</button>
+          <a href="./index.html" class="btn btn-secondary">Back to Home</a>
+        </div>
+      </div>
     </div>
+
+    <!-- Keyboard shortcuts help (hidden by default) -->
+    <div id="shortcuts-help" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); padding: 2rem; z-index: 10001; max-width: 400px; width: 90%;" role="dialog" aria-labelledby="shortcuts-title" aria-hidden="true">
+      <h2 id="shortcuts-title" style="margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600;">Keyboard Shortcuts</h2>
+      <ul style="margin: 0; padding: 0; list-style: none; font-size: 0.875rem;">
+        <li style="display: flex; justify-content: space-between; padding: 0.25rem 0;">
+          <span>Help</span>
+          <kbd style="background: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.75rem;">F1</kbd>
+        </li>
+        <li style="display: flex; justify-content: space-between; padding: 0.25rem 0;">
+          <span>Save</span>
+          <kbd style="background: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.75rem;">Ctrl+S</kbd>
+        </li>
+        <li style="display: flex; justify-content: space-between; padding: 0.25rem 0;">
+          <span>Back to Home</span>
+          <kbd style="background: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.75rem;">Esc</kbd>
+        </li>
+      </ul>
+      <button id="close-shortcuts" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;" aria-label="Close shortcuts help">×</button>
+    </div>
+
+    <!-- Spin animation for loading -->
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .focus\:not-sr-only:focus {
+        position: static;
+        width: auto;
+        height: auto;
+        padding: 0.5rem 1rem;
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+      }
+    </style>
+
+    <script type="module" src="./index.ts"></script>
   </body>
-  <script type="module" src="./index.ts"></script>
 </html>

@@ -37,7 +37,11 @@ const events: Record<string, MessageHandler<any, unknown>> = {
     }
     fileChunks.push(data);
     if (fileChunks.length >= data.totalChunks) {
-      const { removeLoading } = showLoading('Processing document...');
+      const { removeLoading } = showLoading({
+        message: 'Preparing Your Secure Editor',
+        submessage: 'Loading advanced security components to ensure your document never leaves your device. This may take a moment as we initialize the privacy-first editor.',
+        showProgress: true
+      });
       const file = await MessageCodec.decodeFileChunked(fileChunks);
       setDocmentObj({
         fileName: file.name,
@@ -66,7 +70,11 @@ const urlParams = getAllQueryString();
 const { action, type } = urlParams;
 
 const onCreateNew = async (ext: string) => {
-  const { removeLoading } = showLoading('Creating new document...');
+  const { removeLoading } = showLoading({
+    message: 'Creating Your Private Document',
+    submessage: 'Setting up a secure, browser-based editor. Your document will be created entirely on your device for maximum privacy.',
+    showProgress: true
+  });
   setDocmentObj({
     fileName: 'New_Document' + ext,
     file: undefined,
@@ -118,22 +126,22 @@ const handleUploadedFile = async () => {
     const { removeLoading } = showLoading('Loading your document...');
     try {
       const fileData = JSON.parse(uploadedFileData);
-      
+
       // Convert data URL back to File
       const response = await fetch(fileData.data);
       const blob = await response.blob();
       const file = new File([blob], fileData.name, { type: fileData.type });
-      
+
       setDocmentObj({
         fileName: file.name,
         file: file,
         url: window.URL.createObjectURL(file),
       });
-      
+
       await initX2T();
       const { fileName, file: fileBlob } = getDocmentObj();
       await handleDocumentOperation({ file: fileBlob, fileName, isNew: !fileBlob });
-      
+
       // Clear the uploaded file from sessionStorage
       sessionStorage.removeItem('uploadedFile');
       removeLoading();
