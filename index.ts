@@ -69,6 +69,17 @@ Platform.init(events);
 const urlParams = getAllQueryString();
 const { action, type } = urlParams;
 
+// Debug logging for Cloudflare Pages troubleshooting
+console.log('URL Parameters:', { action, type, fullParams: urlParams });
+console.log('Current URL:', window.location.href);
+
+// Also check for new document creation flag in sessionStorage (backup method)
+const shouldCreateNew = sessionStorage.getItem('createNewDocument');
+if (shouldCreateNew) {
+  sessionStorage.removeItem('createNewDocument');
+  console.log('Found createNewDocument flag in sessionStorage:', shouldCreateNew);
+}
+
 const onCreateNew = async (ext: string) => {
   const { removeLoading } = showLoading({
     message: 'Creating Your Private Document',
@@ -301,11 +312,17 @@ const createControlPanel = () => {
 const initializeEditor = async () => {
   // Check if we're coming from the landing page with specific actions
   if (action === 'new' && type) {
+    console.log('Creating new document from URL params:', type);
     await onCreateNew(type);
+  } else if (shouldCreateNew) {
+    // Backup method using sessionStorage
+    console.log('Creating new document from sessionStorage:', shouldCreateNew);
+    await onCreateNew(shouldCreateNew);
   } else if (action === 'open') {
     await handleUploadedFile();
   } else {
     // Show the control panel for manual selection
+    console.log('Showing control panel - no action specified');
     createControlPanel();
   }
 };

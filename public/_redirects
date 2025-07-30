@@ -6,5 +6,8 @@
 /sdkjs/*  /sdkjs/:splat  200
 /wasm/*  /wasm/:splat  200
 
-# SPA fallback - serve index.html for all other routes
-/*  /index.html  200
+# Ensure query parameters are preserved for editor.html
+/editor.html* /editor.html:splat 200
+
+# Handle SPA routing - fallback to index.html for unmatched routes
+/* /index.html 200

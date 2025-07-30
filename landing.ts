@@ -13,6 +13,12 @@ function goToEditor(action?: string, fileType?: string) {
     url += '?' + params.toString();
   }
 
+  // Also set backup flag in sessionStorage for Cloudflare Pages compatibility
+  if (action === 'new' && fileType) {
+    sessionStorage.setItem('createNewDocument', fileType);
+    console.log('Set createNewDocument flag in sessionStorage:', fileType);
+  }
+
   window.location.href = url;
 }
 
