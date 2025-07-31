@@ -29,6 +29,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        editor: resolve(__dirname, 'editor.html')
+      },
       // 在构建完成后执行清理
       plugins: [
         {
