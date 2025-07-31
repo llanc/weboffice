@@ -5,13 +5,3 @@
 /fonts/*  /fonts/:splat  200
 /sdkjs/*  /sdkjs/:splat  200
 /wasm/*  /wasm/:splat  200
-
-# HTML pages - serve directly with query parameters preserved
-/editor.html  /editor.html  200
-/editor.html?*  /editor.html  200
-
-# Root index
-/  /index.html  200
-
-# Fallback - but don't catch editor.html
-/*  /index.html  200
