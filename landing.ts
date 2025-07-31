@@ -147,32 +147,51 @@ function setupIntersectionObserver() {
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fade-in');
+          // 延迟添加动画，避免页面加载时的布局影响
+          setTimeout(() => {
+            entry.target.classList.add('animate-fade-in');
+          }, 100);
         }
       });
     },
     { threshold: 0.1 }
   );
 
-  // Observe feature cards and other elements
-  const elementsToAnimate = document.querySelectorAll('.bg-gray-50, .bg-white.rounded-2xl');
-  elementsToAnimate.forEach((el) => observer.observe(el));
+  // 只在页面完全加载后才开始观察，避免初始加载时的滚动
+  setTimeout(() => {
+    const elementsToAnimate = document.querySelectorAll('.bg-gray-50, .bg-white.rounded-2xl');
+    elementsToAnimate.forEach((el) => observer.observe(el));
+  }, 500);
 }
 
 // Enhanced accessibility features
 function enhanceAccessibility() {
   // Add skip links - but don't auto-scroll to target
   const skipLink = document.createElement('a');
-  skipLink.href = '#document-types';
+  // 完全移除 href 属性，防止浏览器自动滚动到锚点
+  // skipLink.href = '#document-types';
   skipLink.textContent = 'Skip to document selection';
   skipLink.className = 'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded z-50';
+  skipLink.setAttribute('role', 'button');
+  skipLink.setAttribute('tabindex', '0');
 
-  // Prevent auto-scroll when adding the skip link
+  // 使用事件处理器代替锚点链接
   skipLink.addEventListener('click', (e) => {
     e.preventDefault();
     const target = document.getElementById('document-types');
     if (target) {
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  // 添加键盘支持
+  skipLink.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const target = document.getElementById('document-types');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   });
 
