@@ -15,7 +15,8 @@
     <meta property="og:title" id="og-title" content="SecureOffice - Secure Online Document Editor" />
     <meta property="og:description" id="og-description" content="Edit documents with complete privacy in your browser. No uploads, no downloads, maximum security." />
     <meta property="og:type" content="webapp" />
-    <meta property="og:image" content="./img/64.png" />
+    <meta property="og:url" content="https://secureoffice.lrust.com/editor.html" />
+    <meta property="og:image" content="https://secureoffice.lrust.com/img/64.png" />
 
     <!-- Favicon -->
     <link href="./img/64.png" rel="shortcut icon" />
@@ -194,7 +195,7 @@
             <span id="save-status-text">Saved</span>
           </div>
 
-          <button id="back-home" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;" aria-label="Return to homepage">
+          <button id="back-home" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors transform hover:scale-105 shadow-sm" aria-label="Return to homepage">
             ← Back to Home
           </button>
         </div>
@@ -282,5 +283,55 @@
     </style>
 
     <script type="module" src="./index.ts"></script>
+
+    <!-- Editor page specific JavaScript -->
+    <script>
+      // Handle back to home button click
+      document.addEventListener('DOMContentLoaded', () => {
+        const backHomeBtn = document.getElementById('back-home');
+        if (backHomeBtn) {
+          backHomeBtn.addEventListener('click', () => {
+            window.location.href = './index.html';
+          });
+        }
+
+        // Handle escape key shortcut
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            window.location.href = './index.html';
+          }
+        });
+
+        // Handle retry button in error state
+        const retryBtn = document.getElementById('retry-btn');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', () => {
+            window.location.reload();
+          });
+        }
+
+        // Handle shortcuts help
+        const shortcutsHelp = document.getElementById('shortcuts-help');
+        const closeShortcuts = document.getElementById('close-shortcuts');
+
+        if (closeShortcuts && shortcutsHelp) {
+          closeShortcuts.addEventListener('click', () => {
+            shortcutsHelp.style.display = 'none';
+            shortcutsHelp.setAttribute('aria-hidden', 'true');
+          });
+        }
+
+        // Show shortcuts on F1
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'F1') {
+            e.preventDefault();
+            if (shortcutsHelp) {
+              shortcutsHelp.style.display = 'block';
+              shortcutsHelp.setAttribute('aria-hidden', 'false');
+            }
+          }
+        });
+      });
+    </script>
   </body>
 </html>
